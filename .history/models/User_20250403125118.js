@@ -4,11 +4,11 @@ const mongoose = require('mongoose');
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String }, // Password is optional for Google users
+  password: { type: String, required: true },
   role: { type: String, enum: ['tenant', 'landlord'], required: true },
   phone: { type: String },
   email_verified: { type: Boolean, default: false },
-  auth_provider: { type: String, enum: ['local', 'google'], default: 'local' },
+  phone_verified: { type: Boolean, default: false },
   created_at: { type: Date, default: Date.now }
 });
 

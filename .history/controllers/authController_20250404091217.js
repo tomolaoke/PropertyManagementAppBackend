@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail');
 const sendSMS = require('../utils/sendSMS');
 const generateOTP = require('../utils/generateOTP');
-const passport = require('passport');
+const passport = require('passport'); // Add this line
 
 const generateJWT = (user) => {
   return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -33,7 +33,7 @@ exports.register = async (req, res) => {
     user_id: user._id,
     type: 'email_verification',
     token: emailOTP,
-    expires_at: new Date.now() + 3600000 // 1 hour expiry
+    expires_at: new Date(Date.now() + 3600000)
   });
   try {
     await sendEmail(email, 'Verify Your Email - Property Manager', `Your OTP is ${emailOTP}`);
@@ -47,7 +47,7 @@ exports.register = async (req, res) => {
       user_id: user._id,
       type: 'phone_verification',
       token: phoneOTP,
-      expires_at: new Date.now() + 3600000
+      expires_at: new Date(Date.now() + 3600000)
     });
     try {
       await sendSMS(phone, `Your Property Manager OTP is ${phoneOTP}`);
@@ -63,13 +63,7 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
-  if (!user) {
-    return res.status(401).json({ message: 'Invalid credentials' });
-  }
-  if (user.auth_provider === 'google') {
-    return res.status(400).json({ message: 'Please log in with Google' });
-  }
-  if (!user.password || !(await bcrypt.compare(password, user.password))) {
+  if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
   if (!user.email_verified) {
@@ -118,16 +112,13 @@ exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
   const user = await User.findOne({ email });
   if (!user) return res.status(404).json({ message: 'User not found' });
-  if (user.auth_provider === 'google') {
-    return res.status(400).json({ message: 'Password reset not available for Google accounts' });
-  }
 
   const resetToken = generateOTP();
   await Token.create({
     user_id: user._id,
     type: 'password_reset',
     token: resetToken,
-    expires_at: new Date.now() + 3600000
+    expires_at: new Date(Date.now() + 3600000)
   });
   try {
     await sendEmail(email, 'Password Reset - Property Manager', `Your reset OTP is ${resetToken}`);
@@ -156,26 +147,8 @@ exports.resetPassword = async (req, res) => {
 };
 
 // Google OAuth endpoints
-exports.googleAuth = (req, res, next) => {
-  const role = req.query.role;
-  if (!role || !['tenant', 'landlord'].includes(role)) {
-    return res.status(400).json({ message: 'Role is required' });
-  }
-  passport.authenticate('google', {
-    scope: ['profile', 'email'],
-    state: role // Pass role as state
-  })(req, res, next);
-};
-
-exports.googleCallback = (req, res, next) => {
-  passport.authenticate('google', { session: false }, (err, user, info) => {
-    if (err) {
-      return res.status(400).json({ message: 'Authentication error', error: err.message });
-    }
-    if (!user) {
-      return res.status(401).json({ message: 'Authentication failed' });
-    }
-    const token = generateJWT(user);
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
-  })(req, res, next);
-};
+exports.googleAuth = passport.authenticate('google', { scope: ['profile', 'email'] });
+exports.googleCallback = passport.authenticate('google', { session: false }, (req, res) => {
+  const token = generateJWT(req.user);
+  res.json({ token, user: { id: req.user._id, name: req.user.name, email: req.user.email, role: req.user.role } });
+});
