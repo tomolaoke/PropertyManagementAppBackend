@@ -9,6 +9,11 @@ const generateOTP = require('../utils/generateOTP');
 const passport = require('passport');
 const { mockVerifyNIN } = require('../mockApi'); // For NIN verification
 
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const twilioClient = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
+
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+
 const generateJWT = (user) => {
   return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };

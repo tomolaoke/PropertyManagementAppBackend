@@ -9,9 +9,8 @@ const UserSchema = new mongoose.Schema({
   phone: { type: String },
   email_verified: { type: Boolean, default: false },
   auth_provider: { type: String, enum: ['local', 'google'], default: 'local' },
-  created_at: { type: Date, default: Date.now },
-  identity_verified: { type: Boolean, default: false }, // For NIN verification
-  nin: { type: String, unique: true, sparse: true } // Optional, unique if provided
+  created_at: { type: Date, default: Date.now }
+  
 });
 
 module.exports = mongoose.model('User', UserSchema);

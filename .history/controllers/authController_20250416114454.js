@@ -7,7 +7,7 @@ const sendEmail = require('../utils/sendEmail');
 const sendSMS = require('../utils/sendSMS');
 const generateOTP = require('../utils/generateOTP');
 const passport = require('passport');
-const { mockVerifyNIN } = require('../mockApi'); // For NIN verification
+
 
 const generateJWT = (user) => {
   return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -179,39 +179,4 @@ exports.googleCallback = (req, res, next) => {
     const token = generateJWT(user);
     res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
   })(req, res, next);
-};
-
-
-// POST /api/auth/verify-identity
-exports.verifyIdentity = async (req, res) => {
-  const { nin, firstName, lastName, dateOfBirth } = req.body;
-
-  // Validate input
-  if (!nin || !firstName || !lastName || !dateOfBirth) {
-    return res.status(400).json({ message: 'All fields are required' });
-  }
-  if (!/^\d{11}$/.test(nin)) {
-    return res.status(400).json({ message: 'NIN must be 11 digits' });
-  }
-
-  try {
-    // Assume user is authenticated (protected route)
-    const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Use mock API for testing
-    const response = await mockVerifyNIN(nin, firstName, lastName, dateOfBirth);
-
-    if (response.status === 'success' && response.data.verified) {
-      user.identity_verified = true;
-      user.nin = nin;
-      await user.save();
-      return res.json({ message: 'Identity verified successfully', data: response.data });
-    } else {
-      return res.status(400).json({ message: 'Verification failed', details: response.data });
-    }
-  } catch (error) {
-    console.error('Identity verification error:', error.message);
-    return res.status(500).json({ message: 'Server error during verification', error: error.message });
-  }
 };

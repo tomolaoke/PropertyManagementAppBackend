@@ -1,0 +1,19 @@
+{
+    "name": "property-manager-backend",
+    "version": "1.0.0",
+    "scripts": {
+      "start": "node server.js"
+    },
+    "dependencies": {
+      "@sendgrid/mail": "^8.1.4",
+      "bcryptjs": "^2.4.3",
+      "dotenv": "^16.4.5",
+      "express": "^4.18.2",
+      "jsonwebtoken": "^9.0.2",
+      "mongodb": "^6.15.0",
+      "mongoose": "^8.13.2",
+      "passport": "^0.6.0",
+      "passport-google-oauth20": "^2.0.0",
+      "twilio": "^5.5.1"
+    }
+  }
