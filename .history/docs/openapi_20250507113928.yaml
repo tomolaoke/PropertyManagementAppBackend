@@ -1,0 +1,96 @@
+openapi: 3.0.3
+info:
+  title: Property Management System API
+  version: 1.0.0
+  description: API for managing properties, leases, and tenants
+servers:
+  - url: http://localhost:5000/api
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string }
+                password: { type: string }
+                role: { type: string, enum: [tenant, landlord] }
+                phone: { type: string }
+      responses:
+        '201': { description: User registered }
+  /auth/login:
+    post:
+      summary: Log in user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200': { description: JWT token and user data }
+  /properties:
+    post:
+      summary: Create a property
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                description: { type: string }
+                address: { type: string }
+                utility_bill: { type: string, format: binary }
+                utility_bill_date: { type: string }
+                photos: { type: array, items: { type: string, format: binary } }
+                rent: { type: number }
+                lease_duration: { type: number }
+                type: { type: string }
+      responses:
+        '201': { description: Property created }
+    get:
+      summary: Get all properties
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: List of properties }
+  /leases:
+    post:
+      summary: Create a lease
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                property_id: { type: string }
+                tenant_id: { type: string }
+                start_date: { type: string }
+                end_date: { type: string }
+                rent_amount: { type: number }
+                payment_terms: { type: string }
+                document: { type: string, format: binary }
+      responses:
+        '201': { description: Lease created }
+    get:
+      summary: Get all leases
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: List of leases }
+securitySchemes:
+  bearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT

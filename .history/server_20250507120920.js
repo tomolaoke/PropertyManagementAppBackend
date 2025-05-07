@@ -37,7 +37,7 @@ if (!fs.existsSync(logsPath)) {
 connectDB();
 
 // Routes
-app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/auth', require('./routes/auth'));
 app.use('/api/properties', require('./routes/properties'));
 app.use('/api/leases', require('./routes/leases'));
 app.use('/api/invitations', require('./routes/invitations'));
