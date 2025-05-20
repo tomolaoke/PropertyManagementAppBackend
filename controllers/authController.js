@@ -4,10 +4,9 @@ const Token = require('../models/Token');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail');
-const sendSMS = require('../utils/sendSMS');
 const generateOTP = require('../utils/generateOTP');
 const passport = require('passport');
-const { mockVerifyNIN } = require('../mockApi'); // For NIN verification
+const { mockVerifyNIN } = require('../mockApi');
 
 const generateJWT = (user) => {
   return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -22,48 +21,55 @@ exports.register = async (req, res) => {
   if (!['tenant', 'landlord'].includes(role)) {
     return res.status(400).json({ message: 'Invalid role' });
   }
-  const userExists = await User.findOne({ email });
-  if (userExists) return res.status(400).json({ message: 'User already exists' });
+
+  // Normalize email
+  const emailLower = email.toLowerCase().trim();
+  console.log('Attempting to register email:', emailLower); // Debug log
+
+  // Check for existing user
+  const userExists = await User.findOne({ email: emailLower });
+  if (userExists) {
+    console.log('Existing user found:', userExists); // Debug log
+    return res.status(400).json({ message: 'User already exists' });
+  }
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
-  const user = await User.create({ name, email, password: hashedPassword, role, phone });
+  const user = await User.create({
+    name,
+    email: emailLower,
+    password: hashedPassword,
+    role,
+    phone, // Still store phone, but no verification
+    email_verified: false,
+    auth_provider: 'local',
+    created_at: new Date()
+  });
+
+  console.log('User created:', user); // Debug log
 
   const emailOTP = generateOTP();
   await Token.create({
     user_id: user._id,
     type: 'email_verification',
     token: emailOTP,
-    expires_at: new Date.now() + 3600000 // 1 hour expiry
+    expires_at: new Date(Date.now() + 3600000) // 1 hour expiry
   });
   try {
-    await sendEmail(email, 'Verify Your Email - Property Manager', `Your OTP is ${emailOTP}`);
+    await sendEmail(emailLower, 'Verify Your Email - Property Manager', `Your OTP is ${emailOTP}`);
   } catch (error) {
+    console.error('Email send error:', error); // Debug log
     return res.status(500).json({ message: 'Failed to send email OTP' });
   }
 
-  if (phone) {
-    const phoneOTP = generateOTP();
-    await Token.create({
-      user_id: user._id,
-      type: 'phone_verification',
-      token: phoneOTP,
-      expires_at: new Date.now() + 3600000
-    });
-    try {
-      await sendSMS(phone, `Your Property Manager OTP is ${phoneOTP}`);
-    } catch (error) {
-      return res.status(500).json({ message: 'Failed to send SMS OTP' });
-    }
-  }
-
-  res.status(201).json({ message: 'User registered. Verify your email/phone.' });
+  res.status(201).json({ message: 'User registered. Verify your email.' });
 };
 
 // POST /api/auth/login
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
+  const emailLower = email.toLowerCase().trim();
+  const user = await User.findOne({ email: emailLower });
   if (!user) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
@@ -77,17 +83,18 @@ exports.login = async (req, res) => {
     return res.status(403).json({ message: 'Please verify your email' });
   }
   const token = generateJWT(user);
-  res.json({ token, user: { id: user._id, name: user.name, email, role: user.role } });
+  res.json({ token, user: { id: user._id, name: user.name, email: emailLower, role: user.role } });
 };
 
 // POST /api/auth/verify-email
 exports.verifyEmail = async (req, res) => {
   const { email, otp } = req.body;
-  const user = await User.findOne({ email });
+  const emailLower = email.toLowerCase().trim();
+  const user = await User.findOne({ email: emailLower });
   if (!user) return res.status(404).json({ message: 'User not found' });
 
   const token = await Token.findOne({ user_id: user._id, type: 'email_verification', token: otp });
-  if (!token || token.expires_at < Date.now()) {
+  if (!token || token.expires_at < new Date()) {
     return res.status(400).json({ message: 'Invalid or expired OTP' });
   }
 
@@ -97,27 +104,11 @@ exports.verifyEmail = async (req, res) => {
   res.json({ message: 'Email verified' });
 };
 
-// POST /api/auth/verify-phone
-exports.verifyPhone = async (req, res) => {
-  const { phone, otp } = req.body;
-  const user = await User.findOne({ phone });
-  if (!user) return res.status(404).json({ message: 'User not found' });
-
-  const token = await Token.findOne({ user_id: user._id, type: 'phone_verification', token: otp });
-  if (!token || token.expires_at < Date.now()) {
-    return res.status(400).json({ message: 'Invalid or expired OTP' });
-  }
-
-  user.phone_verified = true;
-  await user.save();
-  await Token.deleteOne({ _id: token._id });
-  res.json({ message: 'Phone verified' });
-};
-
 // POST /api/auth/forgot-password
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
-  const user = await User.findOne({ email });
+  const emailLower = email.toLowerCase().trim();
+  const user = await User.findOne({ email: emailLower });
   if (!user) return res.status(404).json({ message: 'User not found' });
   if (user.auth_provider === 'google') {
     return res.status(400).json({ message: 'Password reset not available for Google accounts' });
@@ -128,11 +119,12 @@ exports.forgotPassword = async (req, res) => {
     user_id: user._id,
     type: 'password_reset',
     token: resetToken,
-    expires_at: new Date.now() + 3600000
+    expires_at: new Date(Date.now() + 3600000)
   });
   try {
-    await sendEmail(email, 'Password Reset - Property Manager', `Your reset OTP is ${resetToken}`);
+    await sendEmail(emailLower, 'Password Reset - Property Manager', `Your reset OTP is ${resetToken}`);
   } catch (error) {
+    console.error('Email send error:', error);
     return res.status(500).json({ message: 'Failed to send reset OTP' });
   }
   res.json({ message: 'Reset OTP sent to email' });
@@ -141,11 +133,12 @@ exports.forgotPassword = async (req, res) => {
 // POST /api/auth/reset-password
 exports.resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
-  const user = await User.findOne({ email });
+  const emailLower = email.toLowerCase().trim();
+  const user = await User.findOne({ email: emailLower });
   if (!user) return res.status(404).json({ message: 'User not found' });
 
   const token = await Token.findOne({ user_id: user._id, type: 'password_reset', token: otp });
-  if (!token || token.expires_at < Date.now()) {
+  if (!token || token.expires_at < new Date()) {
     return res.status(400).json({ message: 'Invalid or expired OTP' });
   }
 
@@ -164,7 +157,7 @@ exports.googleAuth = (req, res, next) => {
   }
   passport.authenticate('google', {
     scope: ['profile', 'email'],
-    state: role // Pass role as state
+    state: role
   })(req, res, next);
 };
 
@@ -181,12 +174,9 @@ exports.googleCallback = (req, res, next) => {
   })(req, res, next);
 };
 
-
 // POST /api/auth/verify-identity
 exports.verifyIdentity = async (req, res) => {
   const { nin, firstName, lastName, dateOfBirth } = req.body;
-
-  // Validate input
   if (!nin || !firstName || !lastName || !dateOfBirth) {
     return res.status(400).json({ message: 'All fields are required' });
   }
@@ -195,13 +185,10 @@ exports.verifyIdentity = async (req, res) => {
   }
 
   try {
-    // Assume user is authenticated (protected route)
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Use mock API for testing
     const response = await mockVerifyNIN(nin, firstName, lastName, dateOfBirth);
-
     if (response.status === 'success' && response.data.verified) {
       user.identity_verified = true;
       user.nin = nin;
