@@ -1,0 +1,1257 @@
+# OpenAPI 3.0.3 specification for Property Management System (PMS)
+# This file documents all REST endpoints and schemas for the backend.
+#
+# How to update:
+# - Add new endpoints under `paths`.
+# - Update or add schemas under `components.schemas`.
+# - Use tags to group endpoints.
+# - See README.md for more details.
+#
+openapi: 3.0.3
+info:
+  title: Property Management System API
+  description: API for managing properties, leases, user authentication, and payments for landlords and tenants. Tested endpoints are marked as [TESTED].
+  version: 1.0.2
+  contact:
+    name: PMS Support
+    email: support@pms-bd.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+  - url: https://pms-bd.onrender.com
+    description: Production server
+paths:
+  /api/auth/register:
+    post:
+      summary: Register a new user [TESTED]
+      tags: [Authentication]
+      description: Creates a landlord or tenant account. Sends an email OTP for verification. Tested and working.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              name: Tomola Oke
+              email: tommola.oke@gmail.com
+              password: password12345
+              role: tenant
+              phone: +2341234567890
+      responses:
+        '201':
+          description: User registered, email verification required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+              example:
+                message: User registered. Verify your email.
+        '400':
+          description: Invalid input or user already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/auth/verify-email:
+    post:
+      summary: Verify user email [TESTED]
+      tags: [Authentication]
+      description: Verifies email with OTP sent during registration. Tested and working.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, otp]
+              properties:
+                email: { type: string, format: email }
+                otp: { type: string }
+            example:
+              email: tommola.oke@gmail.com
+              otp: 123456
+      responses:
+        '200':
+          description: Email verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+              example:
+                message: Email verified
+        '400':
+          description: Invalid or expired OTP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/auth/login:
+    post:
+      summary: Log in a user [TESTED]
+      tags: [Authentication]
+      description: Authenticates user and returns JWT token. Tested with tommola.oke@gmail.com.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+            example:
+              email: tommola.oke@gmail.com
+              password: password12345
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user: { $ref: '#/components/schemas/UserResponse' }
+              example:
+                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                user:
+                  _id: 6835ae50eea8975c7a3a130d
+                  name: Tomola Oke
+                  email: tommola.oke@gmail.com
+                  role: tenant
+        '401':
+          description: Invalid credentials or email not verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/auth/forgot-password:
+    post:
+      summary: Initiate password reset [TESTED]
+      tags: [Authentication]
+      description: Sends OTP to email for password reset. Tested and working.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+            example:
+              email: tommola.oke@gmail.com
+      responses:
+        '200':
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+              example:
+                message: Reset OTP sent to email
+        '404':
+          description: Email not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/auth/reset-password:
+    post:
+      summary: Reset password [TESTED]
+      tags: [Authentication]
+      description: Resets password using OTP. Tested and working.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, otp, newPassword]
+              properties:
+                email: { type: string, format: email }
+                otp: { type: string }
+                newPassword: { type: string, minLength: 6 }
+            example:
+              email: tommola.oke@gmail.com
+              otp: 123456
+              newPassword: newpassword123
+      responses:
+        '200':
+          description: Password reset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+              example:
+                message: Password reset successfully
+        '400':
+          description: Invalid OTP or input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/auth/google:
+    get:
+      summary: Initiate Google OAuth
+      tags: [Authentication]
+      description: Redirects to Google login for authentication. Untested, assumed implemented.
+      parameters:
+        - in: query
+          name: role
+          schema:
+            type: string
+            enum: [landlord, tenant]
+          description: User role for registration
+      responses:
+        '302':
+          description: Redirect to Google login
+        '400':
+          description: Invalid role
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/auth/google/callback:
+    get:
+      summary: Google OAuth callback
+      tags: [Authentication]
+      description: Handles Google callback, returns JWT token. Untested, assumed implemented.
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user: { $ref: '#/components/schemas/UserResponse' }
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/properties:
+    post:
+      summary: Create a new property [TESTED]
+      tags: [Properties]
+      description: Creates a property with JSON payload (URLs for utility_bill and photos). Tested with ID 6835aa6ceea8975c7a3a12fc.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropertyRequest'
+            example:
+              title: Large Cozy Apartment
+              description: 4-bedroom apartment
+              address: 12 Marina Street, Lagos
+              utility_bill: https://res.cloudinary.com/demo/sample.pdf
+              utility_bill_date: 2025-05-01T00:00:00.000Z
+              photos:
+                - https://res.cloudinary.com/demo/sample.jpg
+                - https://res.cloudinary.com/demo/sample2.jpg
+              rent: 560000
+              lease_duration: 12
+              type: apartment
+      responses:
+        '201':
+          description: Property created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  property: { $ref: '#/components/schemas/Property' }
+              example:
+                message: Property created
+                property:
+                  _id: 6835aa6ceea8975c7a3a12fc
+                  landlord_id: 6835937102014bbac617695a
+                  title: Large Cozy Apartment
+                  description: 4-bedroom apartment
+                  address: 12 Marina Street, Lagos
+                  utility_bill: https://res.cloudinary.com/demo/sample.pdf
+                  utility_bill_date: 2025-05-01T00:00:00.000Z
+                  photos:
+                    - https://res.cloudinary.com/demo/sample.jpg
+                    - https://res.cloudinary.com/demo/sample2.jpg
+                  rent: 560000
+                  lease_duration: 12
+                  type: apartment
+                  status: active
+                  created_at: 2025-05-27T12:05:00.049Z
+        '400':
+          description: Missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized (non-landlord)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List properties [TESTED]
+      tags: [Properties]
+      description: Returns properties (landlord sees own, tenant sees active). Tested with tenant token.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of properties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Property'
+              example:
+                - _id: 6835aa6ceea8975c7a3a12fc
+                  landlord_id:
+                    _id: 6835937102014bbac617695a
+                    name: Property Manager
+                    email: propertymanager.ngr@gmail.com
+                  title: Large Cozy Apartment
+                  description: 4-bedroom apartment
+                  address: 12 Marina Street, Lagos
+                  utility_bill: https://res.cloudinary.com/demo/sample.pdf
+                  utility_bill_date: 2025-05-01T00:00:00.000Z
+                  photos:
+                    - https://res.cloudinary.com/demo/sample.jpg
+                    - https://res.cloudinary.com/demo/sample2.jpg
+                  rent: 560000
+                  lease_duration: 12
+                  type: apartment
+                  status: active
+                  created_at: 2025-05-27T12:05:00.049Z
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/properties/{id}:
+    get:
+      summary: Get a single property [TESTED]
+      tags: [Properties]
+      description: Retrieves a property by ID. Tested with ID 6835aa6ceea8975c7a3a12fc.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Property ID
+          example: 6835aa6ceea8975c7a3a12fc
+      responses:
+        '200':
+          description: Property details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+              example:
+                _id: 6835aa6ceea8975c7a3a12fc
+                landlord_id:
+                  _id: 6835937102014bbac617695a
+                  name: Property Manager
+                  email: propertymanager.ngr@gmail.com
+                title: Large Cozy Apartment
+                description: 4-bedroom apartment
+                address: 12 Marina Street, Lagos
+                utility_bill: https://res.cloudinary.com/demo/sample.pdf
+                utility_bill_date: 2025-05-01T00:00:00.000Z
+                photos:
+                  - https://res.cloudinary.com/demo/sample.jpg
+                  - https://res.cloudinary.com/demo/sample2.jpg
+                rent: 560000
+                lease_duration: 12
+                type: apartment
+                status: active
+                created_at: 2025-05-27T12:05:00.049Z
+        '404':
+          description: Property not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update a property
+      tags: [Properties]
+      description: Updates a property (landlord only). Untested but implemented in propertiesController.js.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Property ID
+          example: 6835aa6ceea8975c7a3a12fc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropertyRequest'
+            example:
+              title: Updated Large Cozy Apartment
+              photos:
+                - https://res.cloudinary.com/demo/sample3.jpg
+      responses:
+        '200':
+          description: Property updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  property: { $ref: '#/components/schemas/Property' }
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Property not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Soft delete a property
+      tags: [Properties]
+      description: Marks a property as deleted (landlord only). Untested but implemented.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Property ID
+          example: 6835aa6ceea8975c7a3a12fc
+      responses:
+        '200':
+          description: Property deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+              example:
+                message: Property deleted
+        '403':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Property not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/leases:
+    post:
+      summary: Create a new lease [TESTED]
+      tags: [Leases]
+      description: Creates a lease between a property and tenant (landlord only). Tested with ID 6835edfa996e720d12ea30d0.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaseRequest'
+            example:
+              property_id: 6835aa6ceea8975c7a3a12fc
+              tenant_id: 6835ae50eea8975c7a3a130d
+              start_date: 2025-06-01T00:00:00.000Z
+              end_date: 2026-05-31T00:00:00.000Z
+              rent_amount: 560000
+              payment_terms: Yearly
+      responses:
+        '201':
+          description: Lease created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  lease: { $ref: '#/components/schemas/Lease' }
+              example:
+                message: Lease created
+                lease:
+                  _id: 6835edfa996e720d12ea30d0
+                  property_id: 6835aa6ceea8975c7a3a12fc
+                  tenant_id: 6835ae50eea8975c7a3a130d
+                  start_date: 2025-06-01T00:00:00.000Z
+                  end_date: 2026-05-31T00:00:00.000Z
+                  rent_amount: 560000
+                  payment_terms: Yearly
+                  status: upcoming
+                  created_at: 2025-05-27T16:53:14.145Z
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized (non-landlord)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List leases [TESTED]
+      tags: [Leases]
+      description: Returns leases (landlord sees own, tenant sees theirs). Tested with tenant and landlord tokens.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of leases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Lease'
+              example:
+                - _id: 6835edfa996e720d12ea30d0
+                  property_id:
+                    _id: 6835aa6ceea8975c7a3a12fc
+                    title: Large Cozy Apartment
+                    address: 12 Marina Street, Lagos
+                  tenant_id:
+                    _id: 6835ae50eea8975c7a3a130d
+                    name: Tomola Oke
+                    email: tommola.oke@gmail.com
+                  start_date: 2025-06-01T00:00:00.000Z
+                  end_date: 2026-05-31T00:00:00.000Z
+                  rent_amount: 560000
+                  payment_terms: Yearly
+                  status: upcoming
+                  created_at: 2025-05-27T16:53:14.145Z
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/leases/{id}:
+    get:
+      summary: Get lease by ID [TESTED]
+      tags: [Leases]
+      description: Retrieves a lease by ID (landlord or tenant). Tested with ID 6835edfa996e720d12ea30d0, tenant authorization issue pending.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Lease ID
+          example: 6835edfa996e720d12ea30d0
+      responses:
+        '200':
+          description: Lease details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lease'
+              example:
+                _id: 6835edfa996e720d12ea30d0
+                property_id:
+                  _id: 6835aa6ceea8975c7a3a12fc
+                  title: Large Cozy Apartment
+                  address: 12 Marina Street, Lagos
+                tenant_id:
+                  _id: 6835ae50eea8975c7a3a130d
+                  name: Tomola Oke
+                  email: tommola.oke@gmail.com
+                start_date: 2025-06-01T00:00:00.000Z
+                end_date: 2026-05-31T00:00:00.000Z
+                rent_amount: 560000
+                payment_terms: Yearly
+                status: upcoming
+                created_at: 2025-05-27T16:53:14.145Z
+        '403':
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: Not authorized
+        '404':
+          description: Lease not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update lease [TESTED]
+      tags: [Leases]
+      description: Updates a lease (landlord only). Tested with ID 6835edfa996e720d12ea30d0.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Lease ID
+          example: 6835edfa996e720d12ea30d0
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaseRequest'
+            example:
+              rent_amount: 600000
+              payment_terms: Quarterly
+      responses:
+        '200':
+          description: Lease updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  lease: { $ref: '#/components/schemas/Lease' }
+              example:
+                message: Lease updated
+                lease:
+                  _id: 6835edfa996e720d12ea30d0
+                  property_id: 6835aa6ceea8975c7a3a12fc
+                  tenant_id: 6835ae50eea8975c7a3a130d
+                  start_date: 2025-06-01T00:00:00.000Z
+                  end_date: 2026-05-31T00:00:00.000Z
+                  rent_amount: 600000
+                  payment_terms: Quarterly
+                  status: upcoming
+                  created_at: 2025-05-27T16:53:14.145Z
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized (non-landlord)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete lease [TESTED]
+      tags: [Leases]
+      description: Deletes a lease (landlord only). Tested with ID 6835edfa996e720d12ea30d0.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Lease ID
+          example: 6835edfa996e720d12ea30d0
+      responses:
+        '200':
+          description: Lease deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+              example:
+                message: Lease deleted
+        '403':
+          description: Unauthorized (non-landlord)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Lease not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/payments:
+    post:
+      summary: Create a payment [TESTED]
+      tags: [Payments]
+      description: Initiates a payment for a lease (tenant only, mock payment with UUID). Tested with lease ID 6835edfa996e720d12ea30d0.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+            example:
+              lease_id: 6835edfa996e720d12ea30d0
+              amount: 560000
+      responses:
+        '201':
+          description: Payment processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  payment: { $ref: '#/components/schemas/Payment' }
+              example:
+                message: Payment processed
+                payment:
+                  _id: new_payment_id
+                  lease_id: 6835edfa996e720d12ea30d0
+                  tenant_id: 6835ae50eea8975c7a3a130d
+                  amount: 560000
+                  status: completed
+                  transaction_id: uuid_string
+                  created_at: 2025-05-27T16:53:14.145Z
+        '400':
+          description: Missing lease_id or amount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized (non-tenant or invalid lease)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List payments [TESTED]
+      tags: [Payments]
+      description: Returns payments (tenant sees own, landlord sees for their properties). Tested with tenant token.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Payment'
+              example:
+                - _id: new_payment_id
+                  lease_id:
+                    _id: 6835edfa996e720d12ea30d0
+                    start_date: 2025-06-01T00:00:00.000Z
+                    end_date: 2026-05-31T00:00:00.000Z
+                  tenant_id: 6835ae50eea8975c7a3a130d
+                  amount: 560000
+                  status: completed
+                  transaction_id: uuid_string
+                  created_at: 2025-05-27T16:53:14.145Z
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/payments/subaccount:
+    post:
+      summary: Create payment subaccount
+      tags: [Payments]
+      description: Sets up a payment subaccount for landlord (e.g., Paystack). Untested, assumed implemented.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [businessName, bankCode, accountNumber]
+              properties:
+                businessName: { type: string }
+                bankCode: { type: string }
+                accountNumber: { type: string }
+            example:
+              businessName: Landlord Business
+              bankCode: 044
+              accountNumber: 0690000031
+      responses:
+        '201':
+          description: Subaccount created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  subaccountId: { type: string }
+              example:
+                message: Subaccount created
+                subaccountId: sub_123456
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/payments/initialize:
+    post:
+      summary: Initialize a payment
+      tags: [Payments]
+      description: Initiates a payment (e.g., rent payment, Paystack). Untested, assumed implemented.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, lease_id]
+              properties:
+                amount: { type: number }
+                lease_id: { type: string }
+            example:
+              amount: 560000
+              lease_id: 6835edfa996e720d12ea30d0
+      responses:
+        '200':
+          description: Payment initialized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  paymentUrl: { type: string }
+              example:
+                message: Payment initialized
+                paymentUrl: https://paystack.com/pay/123456
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/invitations:
+    post:
+      summary: Send invitation to tenant [TESTED]
+      tags: [Invitations]
+      description: Sends an invitation to a tenant for a property (landlord only). Tested and working.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tenant_email, property_id]
+              properties:
+                tenant_email: { type: string, format: email }
+                property_id: { type: string }
+            example:
+              tenant_email: tommola.oke@gmail.com
+              property_id: 6835aa6ceea8975c7a3a12fc
+      responses:
+        '201':
+          description: Invitation sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  invitation: { type: object }
+              example:
+                message: Invitation sent
+                invitation:
+                  _id: 1234567890abcdef
+                  tenant_email: tommola.oke@gmail.com
+                  property_id: 6835aa6ceea8975c7a3a12fc
+                  status: pending
+                  created_at: 2025-05-27T12:00:00Z
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/invitations/{id}/accept:
+    post:
+      summary: Accept an invitation
+      tags: [Invitations]
+      description: Tenant accepts an invitation. Untested, assumed implemented.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Invitation ID
+      responses:
+        '200':
+          description: Invitation accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+              example:
+                message: Invitation accepted
+        '400':
+          description: Invalid invitation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/profile:
+    put:
+      summary: Update user profile [TESTED]
+      tags: [Profile]
+      description: Updates user details (name, phone, etc.). Tested and working.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                phone: { type: string }
+            example:
+              name: Tomola Oke Updated
+              phone: +2349876543210
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  user: { $ref: '#/components/schemas/UserResponse' }
+              example:
+                message: Profile updated
+                user:
+                  _id: 6835ae50eea8975c7a3a130d
+                  name: Tomola Oke Updated
+                  email: tommola.oke@gmail.com
+                  role: tenant
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/requests:
+    post:
+      summary: Create a property request [TESTED]
+      tags: [Requests]
+      description: Tenant requests to lease a property. Tested and working.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [property_id]
+              properties:
+                property_id: { type: string }
+            example:
+              property_id: 6835aa6ceea8975c7a3a12fc
+      responses:
+        '201':
+          description: Request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  request: { type: object }
+              example:
+                message: Request created
+                request:
+                  _id: 1234567890abcdef
+                  property_id: 6835aa6ceea8975c7a3a12fc
+                  tenant_id: 6835ae50eea8975c7a3a130d
+                  status: pending
+                  created_at: 2025-05-27T12:00:00Z
+        '400':
+          description: Invalid property
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized (non-tenant)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/maintenance:
+    post:
+      summary: Submit a maintenance request
+      tags: [Maintenance]
+      description: Allows tenants to submit maintenance requests for properties. Untested, assumed implemented.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceRequest'
+            example:
+              property_id: 6835aa6ceea8975c7a3a12fc
+              description: Fix leaking faucet
+      responses:
+        '201':
+          description: Maintenance request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  request: { $ref: '#/components/schemas/MaintenanceRequest' }
+              example:
+                message: Maintenance request created
+                request:
+                  _id: 1234567890abcdef
+                  property_id: 6835aa6ceea8975c7a3a12fc
+                  description: Fix leaking faucet
+                  status: pending
+                  created_at: 2025-05-28T12:00:00Z
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name: { type: string }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 6 }
+        role: { type: string, enum: [landlord, tenant] }
+        phone: { type: string }
+    UserResponse:
+      type: object
+      properties:
+        _id: { type: string }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, enum: [landlord, tenant] }
+    PropertyRequest:
+      type: object
+      required: [title, description, address, utility_bill, utility_bill_date, photos, rent, lease_duration, type]
+      properties:
+        title: { type: string }
+        description: { type: string }
+        address: { type: string }
+        utility_bill: { type: string, format: uri, description: 'URL to utility bill' }
+        utility_bill_date: { type: string, format: date-time }
+        photos: { type: array, items: { type: string, format: uri }, minItems: 1 }
+        rent: { type: number }
+        lease_duration: { type: number }
+        type: { type: string, enum: [apartment, house, commercial] }
+    Property:
+      type: object
+      properties:
+        _id: { type: string }
+        landlord_id:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/UserResponse'
+        title: { type: string }
+        description: { type: string }
+        address: { type: string }
+        utility_bill: { type: string, format: uri }
+        utility_bill_date: { type: string, format: date-time }
+        photos: { type: array, items: { type: string, format: uri } }
+        rent: { type: number }
+        lease_duration: { type: number }
+        type: { type: string, enum: [apartment, house, commercial] }
+        status: { type: string, enum: [active, archived, deleted] }
+        created_at: { type: string, format: date-time }
+    LeaseRequest:
+      type: object
+      required: [property_id, tenant_id, start_date, end_date, rent_amount, payment_terms]
+      properties:
+        property_id: { type: string }
+        tenant_id: { type: string }
+        start_date: { type: string, format: date-time }
+        end_date: { type: string, format: date-time }
+        rent_amount: { type: number }
+        payment_terms: { type: string }
+        document: { type: string, nullable: true }
+    Lease:
+      type: object
+      properties:
+        _id: { type: string }
+        property_id:
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                _id: { type: string }
+                title: { type: string }
+                address: { type: string }
+        tenant_id:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/UserResponse'
+        start_date: { type: string, format: date-time }
+        end_date: { type: string, format: date-time }
+        rent_amount: { type: number }
+        payment_terms: { type: string }
+        document: { type: string, nullable: true }
+        status: { type: string, enum: [active, upcoming, expired] }
+        created_at: { type: string, format: date-time }
+    PaymentRequest:
+      type: object
+      required: [lease_id, amount]
+      properties:
+        lease_id: { type: string }
+        amount: { type: number }
+    Payment:
+      type: object
+      properties:
+        _id: { type: string }
+        lease_id:
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                _id: { type: string }
+                start_date: { type: string, format: date-time }
+                end_date: { type: string, format: date-time }
+        tenant_id: { type: string }
+        amount: { type: number }
+        status: { type: string, enum: [pending, completed, failed] }
+        transaction_id: { type: string }
+        created_at: { type: string, format: date-time }
+    Error:
+      type: object
+      properties:
+        message: { type: string }
+      example:
+        message: Invalid input
+    MaintenanceRequest:
+      type: object
+      properties:
+        _id: { type: string }
+        property_id: { type: string }
+        description: { type: string }
+        status: { type: string, enum: [pending, completed] }
+        created_at: { type: string, format: date-time }
+    PaymentSubaccount:
+      type: object
+      properties:
+        _id: { type: string }
+        property_id: { type: string }
+        account_name: { type: string }
+        bank_name: { type: string }
+        account_number: { type: string }
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []

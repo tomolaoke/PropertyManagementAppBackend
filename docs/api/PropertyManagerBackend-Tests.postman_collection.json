@@ -1,0 +1,505 @@
+{
+  "info": {
+    "name": "PropertyManagerBackend(NEW-TEST)",
+    "_postman_id": "7b9e3c4d-8f2a-4c1b-9e7d-5a6b8c9f1234",
+    "description": "Tests for Property Management System Backend API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (Tenant)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"tommola.oke@gmail.com\",\n  \"password\": \"password12345\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"tommola.oke@gmail.com\",\n  \"password\": \"password12345\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "auth", "login"]
+                }
+              },
+              "status": 200,
+              "code": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": \"6835ae50eea8975c7a3a130d\",\n    \"name\": \"Tomola Oke\",\n    \"email\": \"tommola.oke@gmail.com\",\n    \"role\": \"tenant\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Leases",
+      "item": [
+        {
+          "name": "Create Lease",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{landlord_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"property_id\": \"6835aa6ceea8975c7a3a12fc\",\n  \"tenant_id\": \"6835ae50eea8975c7a3a130d\",\n  \"start_date\": \"2025-06-01T00:00:00.000Z\",\n  \"end_date\": \"2026-05-31T00:00:00.000Z\",\n  \"rent_amount\": 560000,\n  \"payment_terms\": \"Yearly\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/leases",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "leases"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{landlord_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"property_id\": \"6835aa6ceea8975c7a3a12fc\",\n  \"tenant_id\": \"6835ae50eea8975c7a3a130d\",\n  \"start_date\": \"2025-06-01T00:00:00.000Z\",\n  \"end_date\": \"2026-05-31T00:00:00.000Z\",\n  \"rent_amount\": 560000,\n  \"payment_terms\": \"Yearly\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/leases",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "leases"]
+                }
+              },
+              "status": 201,
+              "code": "{\n  \"message\": \"Lease created\",\n  \"lease\": {\n    \"_id\": \"6835edfa996e720d12ea30d0\",\n    \"property_id\": \"6835aa6ceea8975c7a3a12fc\",\n    \"tenant_id\": \"6835ae50eea8975c7a3a130d\",\n    \"start_date\": \"2025-06-01T00:00:00.000Z\",\n    \"end_date\": \"2026-05-31T00:00:00.000Z\",\n    \"rent_amount\": 560000,\n    \"payment_terms\": \"Yearly\",\n    \"status\": \"upcoming\",\n    \"created_at\": \"2025-05-27T16:53:14.145Z\",\n    \"__v\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Leases",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tenant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/leases",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "leases"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/leases",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "leases"]
+                }
+              },
+              "status": 200,
+              "code": "[{\n  \"_id\": \"6835edfa996e720d12ea30d0\",\n  \"property_id\": {\n    \"_id\": \"6835aa6ceea8975c7a3a12fc\",\n    \"title\": \"Large Cozy Apartment\",\n    \"address\": \"12 Marina Street, Lagos\"\n  },\n  \"tenant_id\": {\n    \"_id\": \"6835ae50eea8975c7a3a130d\",\n    \"name\": \"Tomola Oke\",\n    \"email\": \"tommola.oke@gmail.com\"\n  },\n  \"start_date\": \"2025-06-01T00:00:00.000Z\",\n  \"end_date\": \"2026-05-31T00:00:00.000Z\",\n  \"rent_amount\": 560000,\n  \"payment_terms\": \"Yearly\",\n  \"status\": \"upcoming\",\n  \"created_at\": \"2025-05-27T16:53:14.145Z\",\n  \"__v\": 0\n}]"
+            }
+          ]
+        },
+        {
+          "name": "Get Lease by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tenant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/leases/6835edfa996e720d12ea30d0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "leases", "6835edfa996e720d12ea30d0"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/leases/6835edfa996e720d12ea30d0",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "leases", "6835edfa996e720d12ea30d0"]
+                }
+              },
+              "status": 200,
+              "code": "{\n  \"_id\": \"6835edfa996e720d12ea30d0\",\n  \"property_id\": {\n    \"_id\": \"6835aa6ceea8975c7a3a12fc\",\n    \"title\": \"Large Cozy Apartment\",\n    \"address\": \"12 Marina Street, Lagos\"\n  },\n  \"tenant_id\": {\n    \"_id\": \"6835ae50eea8975c7a3a130d\",\n    \"name\": \"Tomola Oke\",\n    \"email\": \"tommola.oke@gmail.com\"\n  },\n  \"start_date\": \"2025-06-01T00:00:00.000Z\",\n  \"end_date\": \"2026-05-31T00:00:00.000Z\",\n  \"rent_amount\": 560000,\n  \"payment_terms\": \"Yearly\",\n  \"status\": \"upcoming\",\n  \"created_at\": \"2025-05-27T16:53:14.145Z\",\n  \"__v\": 0\n}"
+            },
+            {
+              "name": "Not Authorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/leases/6835edfa996e720d12ea30d0",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "leases", "6835edfa996e720d12ea30d0"]
+                }
+              },
+              "status": 403,
+              "code": "{\n  \"message\": \"Not authorized\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Lease",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{landlord_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rent_amount\": 600000,\n  \"payment_terms\": \"Quarterly\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/leases/6835edfa996e720d12ea30d0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "leases", "6835edfa996e720d12ea30d0"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{landlord_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"rent_amount\": 600000,\n  \"payment_terms\": \"Quarterly\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/leases/6835edfa996e720d12ea30d0",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "leases", "6835edfa996e720d12ea30d0"]
+                }
+              },
+              "status": 200,
+              "code": "{\n  \"message\": \"Lease updated\",\n  \"lease\": {\n    \"_id\": \"6835edfa996e720d12ea30d0\",\n    \"property_id\": \"6835aa6ceea8975c7a3a12fc\",\n    \"tenant_id\": \"6835ae50eea8975c7a3a130d\",\n    \"start_date\": \"2025-06-01T00:00:00.000Z\",\n    \"end_date\": \"2026-05-31T00:00:00.000Z\",\n    \"rent_amount\": 600000,\n    \"payment_terms\": \"Quarterly\",\n    \"status\": \"upcoming\",\n    \"created_at\": \"2025-05-27T16:53:14.145Z\",\n    \"__v\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Lease",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{landlord_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/leases/6835edfa996e720d12ea30d0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "leases", "6835edfa996e720d12ea30d0"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{landlord_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/leases/6835edfa996e720d12ea30d0",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "leases", "6835edfa996e720d12ea30d0"]
+                }
+              },
+              "status": 200,
+              "code": "{\n  \"message\": \"Lease deleted\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Create Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tenant_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lease_id\": \"6835edfa996e720d12ea30d0\",\n  \"amount\": 560000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"lease_id\": \"6835edfa996e720d12ea30d0\",\n  \"amount\": 560000\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/payments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "payments"]
+                }
+              },
+              "status": 201,
+              "code": "{\n  \"message\": \"Payment processed\",\n  \"payment\": {\n    \"_id\": \"new_payment_id\",\n    \"lease_id\": \"6835edfa996e720d12ea30d0\",\n    \"tenant_id\": \"6835ae50eea8975c7a3a130d\",\n    \"amount\": 560000,\n    \"status\": \"completed\",\n    \"transaction_id\": \"uuid_string\",\n    \"created_at\": \"2025-05-27T...\",\n    \"__v\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Payments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tenant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/payments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "payments"]
+                }
+              },
+              "status": 200,
+              "code": "[{\n  \"_id\": \"new_payment_id\",\n  \"lease_id\": {\n    \"_id\": \"6835edfa996e720d12ea30d0\",\n    \"start_date\": \"2025-06-01T00:00:00.000Z\",\n    \"end_date\": \"2026-05-31T00:00:00.000Z\"\n  },\n  \"tenant_id\": \"6835ae50eea8975c7a3a130d\",\n  \"amount\": 560000,\n  \"status\": \"completed\",\n  \"transaction_id\": \"uuid_string\",\n  \"created_at\": \"2025-05-27T...\",\n  \"__v\": 0\n}]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Properties",
+      "item": [
+        {
+          "name": "Get All Properties",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tenant_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/properties",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "properties"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tenant_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/properties",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "properties"]
+                }
+              },
+              "status": 200,
+              "code": "[{\n  \"_id\": \"6835aa6ceea8975c7a3a12fc\",\n  \"landlord_id\": {\n    \"_id\": \"6835937102014bbac617695a\",\n    \"name\": \"Property Manager\",\n    \"email\": \"propertymanager.ngr@gmail.com\"\n  },\n  \"title\": \"Large Cozy Apartment\",\n  \"description\": \"4-bedroom apartment\",\n  \"address\": \"12 Marina Street, Lagos\",\n  \"utility_bill\": \"https://res.cloudinary.com/demo/sample.pdf\",\n  \"utility_bill_date\": \"2025-05-01T00:00:00.000Z\",\n  \"photos\": [\n    \"https://res.cloudinary.com/demo/sample.jpg\",\n    \"https://res.cloudinary.com/demo/sample2.jpg\"\n  ],\n  \"rent\": 560000,\n  \"lease_duration\": 12,\n  \"type\": \"apartment\",\n  \"status\": \"active\",\n  \"created_at\": \"2025-05-27T12:05:00.049Z\",\n  \"__v\": 0\n}]"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "landlord_token",
+      "value": "<landlord_jwt_token>"
+    },
+    {
+      "key": "tenant_token",
+      "value": "<tenant_jwt_token>"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+    "name": "property-manager-backend",
+    "version": "1.0.0",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "@sendgrid/mail": "^8.1.4",
+        "bcryptjs": "^2.4.3",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
+        "express": "^4.18.2",
+        "express-rate-limit": "^7.5.0",
+        "jsonwebtoken": "^9.0.2",
+        "mongodb": "^6.15.0",
+        "mongoose": "^8.15.1",
+        "multer": "^1.4.5-lts.2",
+        "node-cron": "^3.0.3",
+        "passport": "^0.6.0",
+        "passport-google-oauth20": "^2.0.0",
+        "property-manager-backend": "file:",
+        "swagger-ui-express": "^5.0.0",
+        "twilio": "^5.5.1",
+        "uuid": "^11.1.0",
+        "winston": "^3.17.0",
+        "yamljs": "^0.3.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.10"
+    }
+}
