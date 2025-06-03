@@ -20,6 +20,11 @@ app.use(express.json());
 app.use(passport.initialize());
 app.use(requestLogger);
 
+// Root route for welcome message
+app.get('/', (req, res) => {  
+  res.json({ message: 'Welcome to the Property Management System API by Team 3 ' });
+});
+
 // Serve static files (e.g., logo)
 app.use(express.static(path.join(__dirname, 'public')));
 

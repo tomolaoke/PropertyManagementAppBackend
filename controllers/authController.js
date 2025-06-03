@@ -78,7 +78,8 @@ exports.resendOTP = async (req, res) => {
     // Generate new OTP
     const otp = generateOTP();
     user.otp = otp;
-    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    user.otpExpires = new Date(Date.now() + 20 * 60 * 1000); // 20 minutes
+
     await user.save();
 
     await Token.create({
@@ -91,7 +92,7 @@ exports.resendOTP = async (req, res) => {
     await sendEmail(
       email,
       'Resend OTP - Property Manager',
-      `Your OTP is ${otp}. It expires in 10 minutes.`
+      `Your OTP is ${otp}. It expires in 20 minutes.`
     );
 
     res.json({ message: 'OTP resent to email wait a while before resending' });
