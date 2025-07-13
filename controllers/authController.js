@@ -246,14 +246,23 @@ exports.googleAuth = (req, res, next) => {
 
 exports.googleCallback = (req, res, next) => {
   passport.authenticate('google', { session: false }, (err, user, info) => {
-    if (err) {
-      return res.status(400).json({ message: 'Authentication error', error: err.message });
+    try {
+      if (err) {
+        return res.redirect('https://prop-mate-e1z9.vercel.app/auth/error?message=Authentication%20error');
+      }
+      if (!user) {
+        return res.redirect('https://prop-mate-e1z9.vercel.app/auth/error?message=Authentication%20failed');
+      }
+      const token = generateJWT(user);
+      // Redirect to role-specific frontend dashboard
+      const redirectUrl = user.role === 'landlord'
+        ? `https://prop-mate-e1z9.vercel.app/landlord-welcome?token=${encodeURIComponent(token)}`
+        : `https://prop-mate-e1z9.vercel.app/invited-tenant?token=${encodeURIComponent(token)}`;
+      res.redirect(redirectUrl);
+    } catch (error) {
+      console.error('Google callback error:', error);
+      res.redirect('https://prop-mate-e1z9.vercel.app/auth/error?message=Server%20error');
     }
-    if (!user) {
-      return res.status(401).json({ message: 'Authentication failed' });
-    }
-    const token = generateJWT(user);
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
   })(req, res, next);
 };
 

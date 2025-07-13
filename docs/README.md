@@ -1,3 +1,11 @@
+📬 Postman Documentation
+You can test all endpoints using Postman. Download or import the Postman collection:
+
+- [PMS Backend Postman Collection](docs/api/PropertyManagerBackend-Tests.postman_collection.json)
+- Or use the raw link: https://github.com/yourusername/pms-backend/blob/main/docs/api/PropertyManagerBackend-Tests.postman_collection.json
+- **Published Postman Docs:** [View Online](https://documenter.getpostman.com/view/37688262/2sB2qdgfKp)
+
+Import this collection into Postman to run and automate tests for all API endpoints. See the "QA Testers" section below for usage tips.
 Property Management System (PMS) Backend
  
 The Property Management System (PMS) backend is a robust RESTful API built with Node.js, Express, and MongoDB, designed to streamline landlord-tenant interactions. It supports user authentication, property management, lease agreements, payments, and more, with a focus on security, scalability, and ease of integration. Deployed on Render and documented with Swagger, this backend is ready to power your frontend application!
@@ -93,6 +101,16 @@ The API is documented using Swagger (OpenAPI 3.0), accessible at:
 Local: http://localhost:5000/api-docs
 Production: https://pms-bd.onrender.com/api-docs
 Download Spec: http://localhost:5000/api-docs.json or https://pms-bd.onrender.com/api-docs.json
+
+📬 Postman Documentation
+You can test all endpoints using Postman. Download or import the Postman collection:
+
+- published to https://documenter.getpostman.com/view/37688262/2sB2qdgfKp
+
+- [PMS Backend Postman Collection](docs/api/PropertyManagerBackend-Tests.postman_collection.json)
+- Or use the raw link: https://github.com/yourusername/pms-backend/blob/main/docs/api/PropertyManagerBackend-Tests.postman_collection.json
+
+Import this collection into Postman to run and automate tests for all API endpoints. See the "QA Testers" section below for usage tips.
 
 Endpoints Overview
 Below are all 22 endpoints, grouped by module, with request examples, responses, and testing instructions. Tested endpoints are marked [TESTED]. Each includes:

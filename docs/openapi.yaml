@@ -208,38 +208,51 @@ paths:
     get:
       summary: Initiate Google OAuth
       tags: [Authentication]
-      description: Redirects to Google login for authentication. Untested, assumed implemented.
+      description: |
+        Redirects to Google login for authentication. The `role` query parameter is required and must be either `tenant` or `landlord`.
+        
+        On successful authentication, users are redirected to:
+        - `/landlord-welcome?token=...` for landlords
+        - `/invited-tenant?token=...` for tenants
+        
+        On error, users are redirected to `/auth/error?message=...` on the frontend.
       parameters:
         - in: query
           name: role
           schema:
             type: string
             enum: [landlord, tenant]
+          required: true
           description: User role for registration
       responses:
         '302':
-          description: Redirect to Google login
+          description: Redirect to Google login or frontend dashboard
         '400':
           description: Invalid role
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
   /auth/google/callback:
     get:
       summary: Google OAuth callback
       tags: [Authentication]
-      description: Handles Google callback, returns JWT token. Untested, assumed implemented.
+      description: |
+        Handles Google callback. On success, redirects to the role-specific dashboard on the frontend with a JWT token in the URL:
+        - Landlord: `/landlord-welcome?token=...`
+        - Tenant: `/invited-tenant?token=...`
+        
+        On error, redirects to `/auth/error?message=...` on the frontend.
       responses:
-        '200':
-          description: Authentication successful
+        '302':
+          description: Redirect to frontend dashboard or error page
+        '400':
+          description: Authentication error
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  token: { type: string }
-                  user: { $ref: '#/components/schemas/UserResponse' }
+                $ref: '#/components/schemas/Error'
         '401':
           description: Authentication failed
           content:

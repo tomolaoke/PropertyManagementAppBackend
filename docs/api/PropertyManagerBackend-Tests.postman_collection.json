@@ -2,8 +2,9 @@
   "info": {
     "name": "PropertyManagerBackend(NEW-TEST)",
     "_postman_id": "7b9e3c4d-8f2a-4c1b-9e7d-5a6b8c9f1234",
-    "description": "Tests for Property Management System Backend API",
+    "description": "Tests for Property Management System Backend API.\n\n**Published Postman Docs:** https://documenter.getpostman.com/view/37688262/2sB2qdgfKp",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    
   },
   "item": [
     {
@@ -52,6 +53,52 @@
               },
               "status": 200,
               "code": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": \"6835ae50eea8975c7a3a130d\",\n    \"name\": \"Tomola Oke\",\n    \"email\": \"tommola.oke@gmail.com\",\n    \"role\": \"tenant\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Google OAuth (Login)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/google?role=tenant",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "google"],
+              "query": [
+                { "key": "role", "value": "tenant", "description": "Role: tenant or landlord (required)" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Redirects to Google login or frontend dashboard",
+              "status": 302,
+              "code": "Redirects to Google login. On success, redirects to /landlord-welcome?token=... (landlord) or /invited-tenant?token=... (tenant) on the frontend. On error, redirects to /auth/error?message=..."
+            },
+            {
+              "name": "Invalid role",
+              "status": 400,
+              "code": "{\n  \"message\": \"Role is required\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Google OAuth Callback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/google/callback",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "google", "callback"]
+            }
+          },
+          "response": [
+            {
+              "name": "Redirects to frontend dashboard or error page",
+              "status": 302,
+              "code": "On success, redirects to /landlord-welcome?token=... (landlord) or /invited-tenant?token=... (tenant) on the frontend. On error, redirects to /auth/error?message=..."
             }
           ]
         }
